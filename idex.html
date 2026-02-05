@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <!-- Načtení knihovny model-viewer POUZE JEDNOU do sekce HEAD -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+
+
+</head>
+
+<style>
+    body {
+    margin:0;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg,#495686, #0b0f16);  /* puvodni barva: background: linear-gradient(135deg, #17191d, #6b8bff);*/
+    transition: background 0.2s;   
+}
+
+#bg {
+    margin:0;
+    height: 100%;
+    background: linear-gradient(135deg,#495686, #0b0f16); /* puvodni barva: background: linear-gradient(135deg, #17191d, #6b8bff);*/
+    transition: background 0.2s;  
+   
+}
+
+.logo {
+    width: 60px;
+    height: auto;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .logo {
+         top: 2px;
+         left: 2px;
+         width: 55px;
+    }
+}
+
+#logo-svg {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.95);
+    transform-origin: center;
+  
+}
+
+/* čáry – draw efekt */
+.draw {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    transition: stroke-dashoffset 1.6s ease;
+}
+
+/* tečky – zatím skryté */
+.dot {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* AKTIVNÍ STAV */
+#logo-svg.visible {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+#logo-svg.visible .draw {
+  stroke-dashoffset: 0;
+}
+
+#logo-svg.visible .dot {
+  opacity: 1;
+  transition-delay: 1.3s;
+}
+
+.kont {
+  height: 100vh;                 /* 1 slide = 1 obrazovka */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.produkt {
+    color: white;
+    text-decoration: none; 
+    margin: 0 20px; font-size: 18px; 
+    border: 2px solid white;
+    padding: 8px 20px;           
+    border-radius: 999px;  
+    transition: 0.3s;    /* plynulý efekt */
+    cursor: pointer;     /* kurzor ukáže že to jde kliknout */
+
+}
+
+.pilulka {
+    color: white;
+    text-decoration: none; 
+    margin: 0 20px; font-size: 18px; 
+    border: 2px solid white;
+    padding: 8px 20px;   
+    width: 100%;        
+    border-radius: 999px;  
+    transition: 0.3s;    /* plynulý efekt */
+    cursor: pointer; 
+    flex-direction: column; 
+    height: 20px;
+    
+    
+ 
+    font-size: larger;
+    
+    color: #ffffff;
+    text-align: center;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 40px;/* kurzor ukáže že to jde kliknout */
+    display: block;
+    
+    margin-right: auto;
+    margin-bottom: auto;
+    margin-top: 25px;
+    
+    
+    
+
+    
+
+}
+
+.navbar {
+    position: sticky;
+    top: 0;
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+}
+
+@media (min-width: 768px) {
+    .navbar{
+      display: none;
+    }
+}
+
+.hamburger {
+    width: 38px;
+    height: 27px;
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;    
+}
+
+.hamburger.active span:nth-child(1){
+    transform: rotate(45deg) translateY(14.5px);
+}
+
+.hamburger.active span:nth-child(2){
+    opacity: 0;
+}
+
+.hamburger.active span:nth-child(3){
+    transform: rotate(-45deg) translateY(-15.5px);
+}
+
+.hamburger span {
+    height: 3px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 2px;
+}
+
+.mobile-menu {
+    position: fixed;
+    top: 56px;
+    height: 50%;
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(-130%);
+    justify-content: flex-end;
+     backdrop-filter: blur(10px);
+     -webkit-backdrop-filter: blur(10px);
+     box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+     border-radius: 15px;
+     opacity: 0;
+    
+
+}
+
+
+
+.mobile-menu.open {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.mobile-menu.open .pilulka {
+    animation: slideIn 1s ease forwards; /*styl animace a doba trvani*/
+}
+/* animovani jedotlivych deti*/
+.mobile-menu.open .pilulka:nth-child(1) { animation-delay: 0.1s; }
+.mobile-menu.open .pilulka:nth-child(2) { animation-delay: 0.13s; }
+.mobile-menu.open .pilulka:nth-child(3) { animation-delay: 0.18s; }
+.mobile-menu.open .pilulka:nth-child(4) { animation-delay: 0.23s; }
+
+/* zadani keaframu zceho do ceho animujem*/
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+
+
+.team {
+    color: white;
+    text-decoration: none;
+    margin: 0 20px; font-size: 18px;
+    border: 2px solid white; padding: 8px 20px;              
+    border-radius: 999px;
+    transition: 0.3s;    /* plynulý efekt */
+    cursor: pointer;     /* kurzor ukáže že to jde kliknout */
+    
+
+}
+
+
+#menu {
+    opacity: 0;
+    pointer-events: none; /* Menu je neaktivní, když není vidět */
+    transition: opacity 0.5s ease; /* Plynulé prolnutí */
+}
+
+#menu.visible {
+    opacity: 1;
+    pointer-events: auto; /* Menu je aktivní a lze na něj klikat */
+}
+
+/* Vaše hover efekty pro odkazy */
+.produkt, .team {
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#podmenu {
+    position: fixed;
+    top: 1;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    opacity: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0
+
+}
+
+#podmenu.visible2 {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+
+}
+
+@media (max-width: 768px) {
+    #menu {
+        display: none;
+
+    }
+}
+
+@media (max-width: 768px) {
+    #podmenu {
+        display: none;
+
+    }
+}
+
+.horni-lista {
+     color: white; padding: 10px 0;
+     text-align: center; 
+     width: 100%; 
+     position: fixed; 
+     font-family: 'Questrial', sans-serif;
+     top: 10px;
+     transition: 
+     opacity 0.4s ease,
+     transform 0.4s ease;
+}
+
+
+@media (max-width: 768px) {
+    .horni-lista {
+     color: white; padding: 5px 0;
+     text-align: center; 
+     width: 100%; 
+     position: fixed; 
+     top: 15px; 
+     font-family: 'Questrial', sans-serif;
+    }
+}
+
+@media (max-width: 768px) {
+    .zalomeni {
+        word-break: break-all;
+    }
+}
+
+.mobil-nav {
+   display: flex;
+   padding-left: 20px;
+}
+
+.mobil-nav-item {
+    padding: 14px 40px;
+    color: #ffffff;
+    text-decoration: none;
+    border: 2px solid white;
+    clip-path: polygon(
+        10% 0%,
+        100% 0%,
+        90% 100%,
+        0% 100%,
+    );
+}
+
+.velky-nadpis {
+    font-size: 160px;
+    color: #ffffff;
+    margin:0px;
+    text-align: center;
+    font-family: 'Archivo Black', sans-serif;
+    
+    margin-bottom: 0px;
+}
+
+
+
+
+@media (max-width: 768px) {
+    .zalomeni {
+        word-break: break-all;
+    }
+}
+
+.maly-nadpis {
+    font-size: 60px;
+    margin:0px;
+    color: #ffffff;
+    text-align: center;
+      font-family: 'Archivo Black', sans-serif;
+}
+
+.p-text1 {
+    font-size: larger;
+    margin:0px;
+    color: #ffffff;
+    text-align: center;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 40px;
+}
+
+.pozice-nadpisu {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; 
+    padding-top: 44px;
+}
+
+@media (max-width: 768px) {
+   .pozice-nadpisu{
+        height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; 
+    padding-top: 0px;
+   }
+}
+
+.shadow {
+    text-shadow: 8px 8px 15px rgba(239, 239, 239, 0.1);
+      
+}
+
+@media (max-width: 768px) {
+   .shadow{
+     display: none;
+   }
+}
+
+@media (max-width: 768px) {
+   .velky-nadpis{
+     display: block;
+   }
+}
+
+@media (max-width: 768px) {
+   .maly-nadpis{
+     display: block;
+     font-size: 50px;
+   }
+}
+
+
+
+
+</style>
+<body id="bg">
+
+<div class="menu-wraper">
+    <nav class="horni-lista" >
+<div class="logo">
+  <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20sens%20web.html#team-sekce" >
+    <a href="#vraceni">
+     <svg id="logo-svg" 
+         viewBox="0 0 512 512"
+         xmlns="http://www.w3.org/2000/svg"
+        >
+
+      <circle class="draw"
+              cx="256" cy="256" r="190"
+              stroke="white" stroke-width="18" fill="none"/>
+
+      <path class="draw"
+            d="M160 190
+               C200 140, 312 140, 352 190
+               C392 240, 312 300, 256 320
+               C200 340, 120 300, 160 260"
+            stroke="white" stroke-width="18"
+            fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <path class="draw"
+            d="M352 322
+               C312 372, 200 372, 160 322"
+            stroke="white" stroke-width="18"
+            fill="none" stroke-linecap="round"/>
+
+      <circle class="dot"
+              cx="146" cy="286" r="8" fill="white"/>
+
+      <circle class="dot"
+              cx="366" cy="226" r="8" fill="white"/>
+    </svg>
+    </a>
+  </a>
+</div>
+          <!-- Horní lišta (Navigační menu) -->
+        
+     <div id="menu" class="visible">
+             <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20sens%20o-nas.html" class="produkt"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            O nás
+            </a>
+
+            <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20Sens%20Produkt.html" class="produkt"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            Produkt
+            </a>
+
+               <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20Sens%20aplikace.html" class="produkt"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            Aplikace
+            </a>
+
+            <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20Sens%20team.html" class="team"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            Team
+            </a>
+       </div>
+    </nav>
+</div>
+
+
+
+  <div id="podmenu" class=" horni-lista" >
+     <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20sens%20o-nas.html" class="produkt"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+          Menu  
+     </a>
+  </div>
+
+  <div style="display: flex; justify-content: flex-end;">
+      <header class="navbar">
+    <button class="hamburger" id="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
+  <nav class="mobile-menu" id="mobileMenu" style="display: flex; margin-bottom: 20px;"> 
+     <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20sens%20o-nas.html" class="pilulka"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            O nás
+            </a>
+
+            <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20Sens%20Produkt.html" class="pilulka"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            Produkt
+            </a>
+
+               <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20Sens%20aplikace.html" class="pilulka"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            Aplikace
+            </a>
+
+            <a href="file:///D:/Sout%C4%9B%C5%BEe/SS%20InovationSprint/Web/Sole%20Sens%20team.html" class="pilulka"
+                onmouseover="this.style.backgroundColor='white'; this.style.color='black';"
+                onmouseout="this.style.backgroundColor='transparent'; this.style.color='white';">
+            Team
+            </a>
+  </nav>
+  </div>
+
+
+        <!-- prostredni nadpis -->
+    <div class="pozice-nadpisu" id="vraceni">
+        <h1  class="shadow velky-nadpis">
+           <span class="zalomeni">Sole</span><span>Sens.
+           </span>
+            <h3 class="shadow maly-nadpis">Svoboda v každém kroku</h3>
+        </h1>
+    </div>
+
+<!--sildy-->
+  <div class="kont">
+    <p class="p-text1">Slide 1 – první myšlenka</p>
+  </div>
+
+  <div class="kont">
+    <p class="p-text1">Slide 2 – pokračování</p>
+  </div>
+
+  <div class="kont">
+    <p class="p-text1">Slide 3 – závěr</p>
+  </div>
+
+  <script>
+    let currentSlide = 0; // Paměť, na jakém slidu jsem
+let isScrolling = false; // Ochrana proti nadměrnému scrollu 
+
+const slides = document.querySelectorAll('.kont'); // Najde všechny prvky s třídou kont
+const menu = document.getElementById('menu');
+const podmenu = document.getElementById('podmenu'); //zavedem constantu podmenu a najde me ho
+const isMobile = window.matchMedia("(max-width: 768px)").matches;
+const hamburegr = document.getElementById("hamburger");
+const mobileMenu = document.getElementById("mobileMenu");
+
+//--- Zamezí klasickému scrollu prohlížeče
+function onWheel(e) {
+  e.preventDefault(); 
+//---------------------------------------  
+
+
+
+//---scrolovani-------------------------------------------------------------------------------------------------
+  if (isScrolling) return; //pokud se scroluje zastav
+  if (Math.abs(e.deltaY) < 20) return; //pokud bude touchped vice nez 20 zastav (rptoti driftovani)
+
+  let nextSlide = currentSlide; //najdeme se slidy
+  if (e.deltaY > 0) { //pokud bude smer vetsi nez 0 provede se program pod
+    if (currentSlide < slides.length - 1) { //pokud nebudeme na slidu posuneme na dalsi 
+      nextSlide++; //pricteme slidy do stuckerua 
+    }
+  } else { //jinak pobezi kod pod
+    if (currentSlide > 0) { //pokud slide bude > nez 0 treba 1 tak slide odecteme ze stuckeru
+      nextSlide--;
+    }
+  }
+  if (nextSlide === currentSlide) return; //jestli to bude possledni slide zastav 
+
+  isScrolling = true; 
+  currentSlide = nextSlide;
+//--------------------------------------------------------------------------------------------------------------  
+
+
+
+  // --- skryvani menu -----------------------------------------------------------------------------------------
+//najde id menu 
+if (menu) {
+    menu.classList.toggle('visible', currentSlide === 0);     // Pokud je currentSlide 0, třída 'visible' se přidá. Jinak se odebere.
+}
+updatePodmenu();
+
+
+ //pridani podmenu---
+function updatePodmenu() {
+  if (!podmenu) return; // vykricnik zaneman ze: pokud podmenu neexistuje okamzite skocni funkci
+
+  if (currentSlide >= 1) {
+    podmenu.classList.add('visible2');
+  } else {
+    podmenu.classList.remove('visible2');
+  }
+}
+//-----
+
+//najeti na podmenu a zobrazeni menu---
+podmenu.addEventListener('mouseenter', function() {
+    // Když najedu na podmenu...
+     setTimeout(() => { 
+    podmenu.classList.remove('visible2'); // Podmenu zmizí
+    menu.classList.add('visible');        // Hlavní menu se objeví
+     }, 200);
+});
+//---
+ 
+//odebrani menu a zobrazeni podmenu kdyz vyjedu z menu---
+menu.addEventListener('mouseleave', () => {
+    if (currentSlide === 0) return;
+
+    menu.classList.remove('visible');
+    podmenu.classList.add('visible2');
+});
+//---
+
+  // Plynulý posun na slide---
+  window.scrollTo({
+    top: currentSlide * window.innerHeight,
+    behavior: 'smooth'
+  });
+//---
+  
+//pocka 1s a pak udela isScroling---
+  setTimeout(() => { 
+    isScrolling = false;
+  }, 1000);
+}
+//---
+
+// Registrace události kolečka
+window.addEventListener('wheel', onWheel, { passive: false });
+//-------------------------------------------------------------------------------------------------------
+
+
+
+// --- LOGO ANIMACE ---------------------------------------------------------------------------
+const logo = document.getElementById('logo-svg');//zavedeme constantu loga a najde me logo
+
+//pokud amme logo tak---
+if (logo) { 
+  const paths = logo.querySelectorAll('.draw');//zavedeme constantu pro kresleni
+    paths.forEach(path => { //prok zadou cestu se provede
+  const length = path.getTotalLength(); //zavede s econstanta cesty a zmeri eji cela delka
+      path.style.strokeDasharray = length;//rozdeleni cary na vice kousku
+    });
+    //---
+
+ //casovac kdy se prida viditelne logo (2ms)---
+    setTimeout(() => {
+      logo.classList.add('visible');
+    }, 200);
+}
+//-------------------------------------------------------------------------------------------
+
+
+
+//mobil scroll-------------------------------------------------------
+if (isMobile) {
+  document.body.style.overflowY = "auto";
+} else {
+  document.body.style.overflow = "hidden";
+  window.addEventListener('wheel', onWheel, { passive: false });
+}
+//----------------------------------------------------------------
+
+//hamburegr-----------------------------------
+hamburegr.addEventListener("click", () => {
+hamburegr.classList.toggle("active");
+mobileMenu.classList.toggle("open");
+})
+
+hamburegr.addEventListener("click", (e) => {
+    e.stopPropagation(); // zabrání zavření hned po kliknutí
+    menu.classList.toggle("open");
+});
+
+document.addEventListener("click",() => {
+ mobileMenu.classList.remove("open");
+ hamburger.classList.remove("active");
+})
+
+//-------------------------------------
+  </script>
+</body>
+</html>
